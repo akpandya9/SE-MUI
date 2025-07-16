@@ -26,111 +26,46 @@ import {
 } from "@mui/material";
 import { LinearProgress } from "@mui/material";
 import {
-  CloudUpload as CloudUploadIcon,
-  FilterList as FilterListIcon,
-  InsertDriveFile as InsertDriveFileIcon,
-  Upgrade as UpgradeIcon,
-  Notifications as NotificationsIcon,
-  Settings as SettingsIcon,
-  AccountCircle as AccountCircleIcon,
+  CloudUploadRounded as CloudUploadIcon,
+  FilterListRounded as FilterListIcon,
+  InsertDriveFileRounded as InsertDriveFileIcon,
+  UpgradeRounded as UpgradeIcon,
+  NotificationsRounded as NotificationsIcon,
+  SettingsRounded as SettingsIcon,
+  AccountCircleRounded as AccountCircleIcon,
+  InsertDriveFileRounded as FileIcon,
+  ReportRounded as NoFileIcon,
+  CloudDownloadRounded as CloudDownloadIcon,
+  MoreVertRounded as MoreVertIcon,
 } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router";
 import Logo from "@/assets/Logo.svg";
+import { data } from "@/lib/columns";
 
-// mock data
-const mockData = [
-  {
-    id: 1,
-    fileName: "TSX_StudyResultsPart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 1,
-    uploadDate: "Jun 05, 2025",
-    conversionStatus: 50,
-  },
-  {
-    id: 2,
-    fileName: "TSX_PatientDataPart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 3,
-    uploadDate: "Jun 02, 2025",
-    conversionStatus: 80,
-  },
-  {
-    id: 3,
-    fileName: "TSX_DrugResponsePart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 5,
-    uploadDate: "Jun 01, 2025",
-    conversionStatus: 80,
-  },
-  {
-    id: 4,
-    fileName: "TSX_SiteInfoPart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 4,
-    uploadDate: "Jun 01, 2025",
-    conversionStatus: 60,
-  },
-  {
-    id: 5,
-    fileName: "TSX_EnrollmentStatsPart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 1,
-    uploadDate: "May 28, 2025",
-    conversionStatus: 90,
-  },
-  {
-    id: 6,
-    fileName: "TSX_DemoMetricsPart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 2,
-    uploadDate: "May 27, 2025",
-    conversionStatus: 100,
-  },
-  {
-    id: 7,
-    fileName: "TSX_ProtocolDetailsPart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 5,
-    uploadDate: "May 23, 2025",
-    conversionStatus: 80,
-  },
-  {
-    id: 8,
-    fileName: "TSX_LabReportsPart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 1,
-    uploadDate: "May 23, 2025",
-    conversionStatus: 60,
-  },
-  {
-    id: 9,
-    fileName: "TSX_MonitoringNotesPart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 1,
-    uploadDate: "May 15, 2025",
-    conversionStatus: 80,
-  },
-  {
-    id: 10,
-    fileName: "TSX_AdverseEventsPart1ClinicalTrial.xml",
-    size: "200 KB",
-    icsrCount: 2,
-    uploadDate: "May 05, 2025",
-    conversionStatus: 100,
-  },
-];
-
-type Row = (typeof mockData)[number];
+type Row = (typeof data)[number];
 
 export default function DashboardTable() {
   const columns = useMemo(
     () =>
       [
-        { id: "fileName", label: "File Name" },
-        { id: "icsrCount", label: "ICSR Count" },
-        { id: "uploadDate", label: "Upload Date" },
-        { id: "conversionStatus", label: "Conversion Status" },
+        {
+          id: "fileName",
+          label: "File Name",
+          sortable: true,
+          searchable: true,
+        },
+        {
+          id: "uploadDate",
+          label: "Upload Date",
+          sortable: true,
+          searchable: true,
+        },
+        {
+          id: "conversionStatus",
+          label: "Conversion Status",
+          sortable: true,
+          searchable: false,
+        },
       ] as const,
     []
   );
@@ -138,46 +73,68 @@ export default function DashboardTable() {
   const [orderBy, setOrderBy] = useState<keyof Row>("fileName");
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [filters, setFilters] = useState<{ [key in keyof Row]?: string }>({});
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [filters, setFilters] = useState<Partial<Record<keyof Row, string>>>(
+    {}
+  );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const visible = visibleRows.map((r) => r.id);
+    if (e.target.checked) {
+      setSelectedIds(new Set([...selectedIds, ...visible]));
+    } else {
+      const keep = new Set([...selectedIds]);
+      visible.forEach((id) => keep.delete(id));
+      setSelectedIds(keep);
+    }
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    const next = new Set(selectedIds);
+    if (checked) {
+      next.add(id);
+    } else {
+      next.delete(id);
+    }
+    setSelectedIds(next);
+  };
 
   const filtered = useMemo(
     () =>
-      mockData.filter((row) =>
-        Object.entries(filters).every(([key, value]) =>
-          value
-            ? row[key as keyof Row]
-                .toString()
-                .toLowerCase()
-                .includes(value.toLowerCase())
-            : true
+      data.filter((row) =>
+        columns.every(
+          (col) =>
+            !col.searchable ||
+            !filters[col.id]?.trim() ||
+            row[col.id]
+              .toString()
+              .toLowerCase()
+              .includes(filters[col.id]!.toLowerCase())
         )
       ),
-    [filters]
+    [filters, columns]
   );
 
-  const sorted = useMemo(
-    () =>
-      [...filtered].sort((a, b) => {
-        const aVal = a[orderBy],
-          bVal = b[orderBy];
-        return (
-          (aVal < bVal ? -1 : aVal > bVal ? 1 : 0) * (order === "asc" ? 1 : -1)
-        );
-      }),
-    [filtered, orderBy, order]
-  );
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      let aVal = a[orderBy];
+      let bVal = b[orderBy];
+
+      if (orderBy === "uploadDate") {
+        aVal = a.uploadDateRaw;
+        bVal = b.uploadDateRaw;
+      }
+
+      const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+      return order === "asc" ? cmp : -cmp;
+    });
+  }, [filtered, orderBy, order]);
 
   const visibleRows = useMemo(
     () => sorted.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [sorted, page, rowsPerPage]
   );
-
-  const handleSort = (col: keyof Row) => {
-    const isAsc = orderBy === col && order === "asc";
-    setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(col);
-  };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -302,65 +259,83 @@ export default function DashboardTable() {
             Filters
           </Button>
         </Box>
-        <Paper elevation={1}>
-          <TableContainer component={Paper}>
+
+        {/* Table component */}
+        <Paper>
+          <TableContainer>
             <Table size='small'>
               <TableHead>
                 <TableRow>
+                  <TableCell padding='checkbox'>
+                    <Checkbox
+                      indeterminate={
+                        selectedIds.size > 0 &&
+                        selectedIds.size < visibleRows.length
+                      }
+                      checked={
+                        visibleRows.every((r) => selectedIds.has(r.id)) &&
+                        visibleRows.length > 0
+                      }
+                      onChange={handleSelectAll}
+                    />
+                  </TableCell>
                   {columns.map((col) => (
                     <TableCell key={col.id}>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                      {col.sortable ? (
                         <TableSortLabel
                           active={orderBy === col.id}
                           direction={orderBy === col.id ? order : "asc"}
-                          onClick={() => handleSort(col.id)}
+                          onClick={() => {
+                            const isAsc = orderBy === col.id && order === "asc";
+                            setOrder(isAsc ? "desc" : "asc");
+                            setOrderBy(col.id);
+                          }}
                         >
                           {col.label}
                         </TableSortLabel>
+                      ) : (
+                        col.label
+                      )}
+                      {col.searchable && (
                         <TextField
                           variant='standard'
                           placeholder='Search'
                           size='small'
-                          sx={{ ml: 1, flex: 1 }}
+                          value={filters[col.id] ?? ""}
                           onChange={(e) =>
-                            setFilters((f) => ({
-                              ...f,
+                            setFilters({
+                              ...filters,
                               [col.id]: e.target.value,
-                            }))
+                            })
                           }
-                          value={filters[col.id] || ""}
+                          sx={{ ml: 1 }}
                         />
-                      </Box>
+                      )}
                     </TableCell>
                   ))}
-                  <TableCell>E2B R3 File</TableCell>
-                  <TableCell />
+                  <TableCell>E2BR3 File</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
 
               <TableBody>
                 {visibleRows.map((row) => (
                   <TableRow key={row.id} hover>
-                    <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <Checkbox />
-                        <Typography fontWeight='bold'>
-                          {row.fileName}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                          sx={{ ml: 1 }}
-                        >
-                          {row.size}
-                        </Typography>
-                      </Box>
+                    <TableCell padding='checkbox'>
+                      <Checkbox
+                        checked={selectedIds.has(row.id)}
+                        onChange={(e) =>
+                          handleSelectRow(row.id, e.target.checked)
+                        }
+                      />
                     </TableCell>
-                    <TableCell>{row.icsrCount}</TableCell>
+                    <TableCell>
+                      <Typography fontWeight='bold'>{row.fileName}</Typography>
+                    </TableCell>
                     <TableCell>{row.uploadDate}</TableCell>
                     <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <Box sx={{ flexGrow: 1, mr: 1 }}>
+                      <Box display='flex' alignItems='center'>
+                        <Box flexGrow={1} mr={1}>
                           <LinearProgress
                             variant='determinate'
                             value={row.conversionStatus}
@@ -371,8 +346,23 @@ export default function DashboardTable() {
                         </Typography>
                       </Box>
                     </TableCell>
-                    <TableCell>{/* Icon buttons for actions */}</TableCell>
-                    <TableCell>{/* More menu */}</TableCell>
+                    <TableCell>
+                      <IconButton size='small'>
+                        {row.e2bR3File ? (
+                          <FileIcon sx={{ color: "green" }} />
+                        ) : (
+                          <NoFileIcon sx={{ color: "red" }} />
+                        )}
+                      </IconButton>
+                      <IconButton size='small'>
+                        <CloudDownloadIcon sx={{ color: "black" }} />
+                      </IconButton>
+                    </TableCell>
+                    <TableCell>
+                      <IconButton size='small'>
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -384,12 +374,12 @@ export default function DashboardTable() {
             count={filtered.length}
             page={page}
             rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[5, 10, 25, 50, 100]}
             onPageChange={(_, p) => setPage(p)}
             onRowsPerPageChange={(e) => {
               setRowsPerPage(+e.target.value);
               setPage(0);
             }}
-            rowsPerPageOptions={[5, 10, 25]}
           />
         </Paper>
       </Container>
