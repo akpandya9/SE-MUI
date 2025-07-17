@@ -36,3 +36,71 @@ export const faqs = [
       "Yes, SafetyXchange meets FDA requirements for pharmacovigilance reporting and maintains compliance with relevant regulatory standards.",
   },
 ];
+
+export const sampleXmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<ichicrsmessageheader>
+  <messagetype>ichicssr</messagetype>
+  <messageformatversion>2.1</messageformatversion>
+  <messageformatrelease>2.8</messageformatrelease>
+  <messagenumb>800001</messagenumb>
+  <messagesenderidentifier>PHARMACO1</messagesenderidentifier>
+  <messagereceiveridentifier>REGULATORY1</messagereceiveridentifier>
+  <messagedateformat>204</messagedateformat>
+  <messagedate>20250512</messagedate>
+</ichicrsmessageheader>
+<safetyreport>
+  <safetyreportversion>1</safetyreportversion>
+  <safetyreportid>US-PHARMACO1-2025-00001</safetyreportid>
+  <primarysourcecountry>US</primarysourcecountry>
+  <occurcountry>US</occurcountry>
+  <transmissiondateformat>102</transmissiondateformat>
+  <transmissiondate>20250512</transmissiondate>
+  <reporttype>1</reporttype>
+  <serious>1</serious>
+  <seriousnessdeath>1</seriousnessdeath>
+  </safetyreport>
+`;
+
+export const sampleMissingElements = [
+  {
+    id: 1,
+    field: "messagedate",
+    message:
+      "Message date is missing or not in the correct format (YYYYMMDDHHMMSS).",
+  },
+  {
+    id: 2,
+    field: "messagenumb",
+    message:
+      "Line: 119 Field: messagenumb Error: Unique message identifier is required. Please enter a valid value.",
+  },
+  { id: 3, field: "messagesenderidentifier", message: "" },
+  { id: 4, field: "messagereceiveridentifier", message: "" },
+  {
+    id: 5,
+    field: "safetyreportid",
+    message:
+      "Line: 245 Error: Safety Report ID is required and must be unique.",
+  },
+  {
+    id: 6,
+    field: "fulfillespeditedcriteria",
+    message:
+      "Line: 305 Error: Please specify if this report meets expedited reporting criteria (1 = Yes, 2 = No).",
+  },
+  { id: 7, field: "drugstartdate", message: "" },
+  { id: 8, field: "drugindication", message: "" },
+  { id: 9, field: "drugindication", message: "" },
+  {
+    id: 10,
+    field: "narrativeincluedclinical",
+    message:
+      "Line: 355 Error: Case narrative is required. Please provide a clinical summary of the case.",
+  },
+  {
+    id: 11,
+    field: "receiverorganization",
+    message: "Error: Receiver organization must be specified (e.g., FDA, EMA).",
+  },
+  { id: 12, field: "primarysourcereaction", message: "" },
+];

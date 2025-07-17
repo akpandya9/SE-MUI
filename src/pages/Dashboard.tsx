@@ -41,6 +41,8 @@ import {
 import { Link as RouterLink } from "react-router";
 import Logo from "@/assets/Logo.svg";
 import { data } from "@/lib/columns";
+import E2BPreviewDialog from "@/components/E2BPreviewDialog";
+import { sampleMissingElements, sampleXmlContent } from "@/lib/constants";
 
 type Row = (typeof data)[number];
 
@@ -78,6 +80,16 @@ export default function DashboardTable() {
     {}
   );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [xmlPopData, setXmlPopData] = useState({
+    conversionStatus: "0",
+    fileName: "",
+    uploadedOn: new Date().toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }),
+  });
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     const visible = visibleRows.map((r) => r.id);
@@ -347,7 +359,25 @@ export default function DashboardTable() {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <IconButton size='small'>
+                      <IconButton
+                        size='small'
+                        onClick={() => {
+                          setXmlPopData({
+                            conversionStatus: String(row.conversionStatus),
+                            fileName: row.fileName,
+                            uploadedOn: new Date(
+                              row.uploadDate
+                            ).toLocaleDateString("en-US", {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            }),
+                          });
+                          setTimeout(() => {
+                            setIsDialogOpen(true);
+                          }, 500);
+                        }}
+                      >
                         {row.e2bR3File ? (
                           <FileIcon sx={{ color: "green" }} />
                         ) : (
@@ -382,6 +412,16 @@ export default function DashboardTable() {
             }}
           />
         </Paper>
+
+        <E2BPreviewDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          xmlContent={sampleXmlContent}
+          missingElements={sampleMissingElements}
+          conversionStatus={Number(xmlPopData.conversionStatus)}
+          fileName={xmlPopData.fileName}
+          uploadedOn={xmlPopData.uploadedOn}
+        />
       </Container>
     </Box>
   );
